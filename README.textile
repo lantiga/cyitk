@@ -1,0 +1,145 @@
+h1. cyitk
+h2. A simple ITK-to-Python bridge written in Cython
+
+Let's face it: prototyping ITK code ("ITK":http://www.itk.org) in C++ can end up being not as rapid as needed. The main bottleneck is writing very high-level code: once you've written you algorithmics by assembling a bunch of ITK classes in C++, say in one or more functions, you have to write a main in which you put them together, expose parameters, parse arguments, do your I/O and go through a complie cycle. To visualize, you typically write out a file and view it with an external application.
+
+cyitk lets you write your ITK code in C++ and quickly make high-level functions available to Python, where you can do I/O and visualization interactively. No main's anymore during prototyping.
+
+cyitk is not intended to be a ITK Pyhton wrapper. For that, you should look into WrapITK. cyitk is for those who use ITK in C++ and just want to glue their C++ snippets flexibly with Python, trying out stuff, exploring parameter spaces, looking at intermediate results interactively (a-la Matlab), and in the end want to find themselves with working C++ code with no extra dependencies except ITK.
+
+h2. Author
+* Luca Antiga, Orobix Srl
+
+h2. Dependencies
+
+* "CMake":http://www.cmake.org (>= 2.6)
+* "InsightToolkit":http://www.itk.org (>= 3.10)
+* "Python":http://www.python.org (>= 2.5)
+* "NumPy":http://numpy.scipy.org (>= 1.2.0)
+* "Cython":http://www.cython.org (>= 0.11.2)
+
+h2. Example
+
+Here's a quick example (taken from cyitk/Testing/cyitkGaussianSmoothing).
+
+Say you have a C++ function GaussianSmoothing that applies an ITK filter to an input image and provides the filtered output image. In addition the function requires to specify the sigma of the Gaussian filter.
+
+pre. GaussianSmoothing.h
+<pre><code>
+#ifndef __GaussianSmoothing_h
+#define __GaussianSmoothing_h
+
+#include "itkImage.h"
+#include "itkRecursiveGaussianImageFilter.h"
+
+namespace itk {
+
+typedef Image<float,2> ImageType;
+
+void GaussianSmoothing(ImageType* inputImage, ImageType* outputImage, double sigma)
+{
+  typedef RecursiveGaussianImageFilter<ImageType> RecursiveGaussianFilterType;
+
+  RecursiveGaussianFilterType::Pointer gaussianFilter = RecursiveGaussianFilterType::New();
+  gaussianFilter->SetInput(inputImage);
+  gaussianFilter->SetSigma(sigma);
+  gaussianFilter->Update();
+
+  outputImage->Graft(gaussianFilter->GetOutput());
+}
+
+}
+
+#endif
+</code></pre>
+
+Note: the C++ code does not necessarily have to be in a .h file, and it could also be provided by a static or shared library. In this example it is in a .h file for simplicity.
+In order to make it available as a Python module, write a Cython file that will generate the bridge code:
+
+pre. cyitkGaussianSmoothing.pyx
+<pre><code>
+cimport cyitk
+import cyitk
+
+cdef extern from "GaussianSmoothing.h":
+    void itkGaussianSmoothing "itk::GaussianSmoothing"(cyitk.itkImageF2* inputImage, cyitk.itkImageF2* outputImage, double sigma) except +
+
+def GaussianSmoothing(inputImage,outputImage,sigma):
+    itkGaussianSmoothing((<cyitk.ImageF2>inputImage).GetITKImage(),(<cyitk.ImageF2>outputImage).GetITKImage(),sigma)
+</code></pre>
+
+If you don't know Cython and you don't want to learn it in depth, just take the above as a model, it shouldn't get much more complicated than this. In the future we will explore the possibility to generate it automatically from the function signature. 
+Last, write a CMakeLists.txt file: 
+
+pre. CMakeLists.txt
+<pre><code>
+make_minimum_required(VERSION 2.6)
+project(CYITK_GAUSSIAN_SMOOTHING)
+
+find_path(CYITK_SOURCE_DIR cyitkGenerateImageClass.cmake "")
+
+set(CYITK_WRAPPED_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+include(${CYITK_SOURCE_DIR}/cyitkGenerateImageClass.cmake NO_POLICY_SCOPE)
+cyitk_generate_image_class("float" 2 F2)
+
+include(${CYITK_SOURCE_DIR}/cyitkConfigureModule.cmake NO_POLICY_SCOPE)
+cyitk_configure_module(cyitkGaussianSmoothing cyitkGaussianSmoothing.pyx)
+</code></pre>
+
+Since the C++ function was operating on itk::Image<float,2>, we generated wrappers for that class. However, we could add a list of several image types here (limited to scalar images for now, but support for vector, tensor and multi-channel images is in the works).
+To do that, just list for example
+
+<pre><code>
+cyitk_generate_image_class("float" 2 F2)
+cyitk_generate_image_class("short" 2 S2)
+cyitk_generate_image_class("double" 3 D3)
+</code></pre>
+
+Last note, the third argument is the suffix appended to cyitk.Image to generate the class name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc).
+
+That's it. With very little effort (two files, but consider that CMakeLists.txt is basically the same for any project, except for the specification of image types) we have made our code available in a Python module. At this point, just configure the project with CMake and build using make. A cyitkGaussianSmoothing module will be generated in the build directory. Copy the directory at a convenient location (or make PYTHONPATH point to it), fire up Python and just go
+
+<pre><code>
+#import the module
+import cyitkGaussianSmoothing as cyitk
+
+#load a float,2 image from file
+a = cyitk.ReadImageF2('input.nrrd')
+
+#instantiate an empty float,2 image
+b = cyitk.ImageF2()
+
+#run the ITK code, by specifying a sigma of 1.0
+cyitk.GaussianSmoothing(a,b,1.0)
+
+#at this point, b contains the smoothed image. Let's write it out
+b.WriteImage('output.mha')
+
+#and now impress your friends with matplotlib
+ 
+import pylab
+
+fig = pylab.figure(1)
+fig.subplots_adjust(bottom=0.05, left=0.05, top=0.95, right=0.95, wspace=0.1, hspace=0.1)
+
+subplot = pylab.subplot(1,2,1)
+subplot.set_title('input.nrrd')
+pylab.imshow(a.GetArray())
+pylab.gray()
+
+subplot = pylab.subplot(1,2,2)
+subplot.set_title('output.mha')
+pylab.imshow(b.GetArray())
+pylab.gray()
+
+print a.GetArray()
+print b.GetArray()
+
+fig.savefig('figure.png')
+pylab.show()
+
+</code></pre>
+
+That's it for now, enjoy cyitk!
+

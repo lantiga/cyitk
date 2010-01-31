@@ -1,0 +1,12 @@
+
+cdef extern from "cyitkImage.h":
+
+    ctypedef struct itkImage@CYITK_TEMPLATE_SUFFIX@ "itk::Image<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"
+    ctypedef struct cyitkImage@CYITK_TEMPLATE_SUFFIX@ "cyitkImage<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"
+
+ 
+cdef class Image@CYITK_TEMPLATE_SUFFIX@:
+
+    cdef cyitkImage@CYITK_TEMPLATE_SUFFIX@* thisptr
+    cdef itkImage@CYITK_TEMPLATE_SUFFIX@* GetITKImage(self)
+

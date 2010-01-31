@@ -1,0 +1,202 @@
+import numpy
+cimport numpy
+
+
+from stdlib cimport free, malloc
+cdef extern from "stdlib.h":
+    void *memcpy(void *dst, void *src, long n)
+
+
+cdef extern from "cyitkImage.h":
+    ctypedef struct itkImage@CYITK_TEMPLATE_SUFFIX@ "itk::Image<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"
+    ctypedef struct cyitkImage@CYITK_TEMPLATE_SUFFIX@ "cyitkImage<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>":
+        unsigned int GetImageDimension()
+        void GetSpacing(double* spacing)
+        void SetSpacing(double* spacing)
+        void GetOrigin(double* origin)
+        void SetOrigin(double* origin)
+        void GetDirection(double* direction)
+        void SetDirection(double* direction)
+        void GetBufferedRegionSize(int* bufferedRegionSize)
+        void SetBufferedRegionSize(int* bufferedRegionSize)
+        void SetSize(int* size)
+        void ReadImage(char* filename) except +
+        void WriteImage(char* filename) except +
+        @CYITK_PIXEL_TYPE@* GetBufferPointer()        
+        void SetData(int* shape, @CYITK_PIXEL_TYPE@* data)
+        itkImage@CYITK_TEMPLATE_SUFFIX@* GetITKImage()
+    cyitkImage@CYITK_TEMPLATE_SUFFIX@* new_cyitkImage@CYITK_TEMPLATE_SUFFIX@ "new cyitkImage<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"()
+    void del_cyitkImage@CYITK_TEMPLATE_SUFFIX@ "delete"(cyitkImage@CYITK_TEMPLATE_SUFFIX@* image)
+
+
+DTypeMap@CYITK_TEMPLATE_SUFFIX@ = { 
+          #'signed char'         :'bool',
+      
+          #'signed char'         :'byte',
+          #'signed short'        :'short',
+          #'signed int'          :'int',
+          'signed long'         :'long',
+          #'signed long long'    :'longlong',
+
+          #'unsigned char'       :'ubyte',
+          #'unsigned short'      :'ushort',
+          #'unsigned int'        :'uint',
+          'unsigned long'       :'ulong',
+          #'unsigned long long'  :'ulonglong',
+ 
+          #'char'                :'ubyte',
+          #'short'               :'short',
+          #'int'                 :'int',
+          'long'                :'long',
+          #'long long'           :'longlong',
+      
+          #'float'               :'float',
+          #'double'              :'double',
+          #'long double'         :'longdouble',
+      
+          'signed char'         :'int8',
+          'signed short'        :'int16',
+          'signed int'          :'int32',
+          'signed long long'    :'int64',
+          #'signed long long'    :'int96',
+          #'signed long long'    :'int128',
+      
+          'unsigned char'       :'uint8',
+          'unsigned short'      :'uint16',
+          'unsigned int'        :'uint32',
+          'unsigned long long'  :'uint64',
+          #'unsigned long long'  :'uint96',
+          #'unsigned long long'  :'uint128',
+ 
+          'char'         :'uint8',
+          'short'        :'int16',
+          'int'          :'int32',
+          'long long'    :'int64',
+      
+          'float'               :'float32',
+          'double'              :'float64',
+          #'long double'         :'float80',
+          #'long double'         :'float96',
+          'long double'         :'float128'}
+
+
+cdef class Image@CYITK_TEMPLATE_SUFFIX@:
+
+    cdef itkImage@CYITK_TEMPLATE_SUFFIX@* GetITKImage(self):
+        return self.thisptr.GetITKImage()
+
+    def __cinit__(self):
+        self.thisptr = new_cyitkImage@CYITK_TEMPLATE_SUFFIX@()
+
+    def __dealloc__(self):
+        del_cyitkImage@CYITK_TEMPLATE_SUFFIX@(self.thisptr)
+
+    def GetImageDimension(self):
+        return self.thisptr.GetImageDimension()
+
+    def GetSpacing(self):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* cspacing = <double*>malloc(dimension*sizeof(double))
+        cdef unsigned int i
+        self.thisptr.GetSpacing(cspacing)
+        spacing = []
+        for i in range(dimension):
+            spacing.append(cspacing[i])
+        return spacing
+
+    def SetSpacing(self,spacing):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* cspacing = <double*>malloc(dimension*sizeof(double))
+        cdef unsigned int i
+        for i in range(dimension):
+            cspacing[i] = spacing[i]
+        self.thisptr.SetSpacing(cspacing)
+        free(cspacing)
+
+    def GetOrigin(self):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* corigin = <double*>malloc(dimension*sizeof(double))
+        cdef unsigned int i
+        self.thisptr.GetOrigin(corigin)
+        origin = []
+        for i in range(dimension):
+            origin.append(corigin[i])
+        return origin
+
+    def SetOrigin(self,origin):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* corigin = <double*>malloc(dimension*sizeof(double))
+        cdef unsigned int i
+        for i in range(dimension):
+            corigin[i] = origin[i]
+        self.thisptr.SetOrigin(corigin)
+        free(corigin)
+
+    def GetDirection(self):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* cdirection = <double*>malloc(dimension**2*sizeof(double))
+        cdef unsigned int i
+        self.thisptr.GetDirection(cdirection)
+        direction = []
+        for i in range(dimension**2):
+            direction.append(cdirection[i])
+        return direction
+
+    def SetDirection(self,direction):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef double* cdirection = <double*>malloc(dimension**2*sizeof(double))
+        cdef unsigned int i
+        for i in range(dimension):
+            cdirection[i] = direction[i]
+        self.thisptr.SetDirection(cdirection)
+        free(cdirection)
+
+    def GetBufferedRegionSize(self):
+        cdef unsigned int dimension = self.thisptr.GetImageDimension()
+        cdef int* csize = <int*>malloc(dimension*sizeof(int))
+        cdef unsigned int i
+        self.thisptr.GetBufferedRegionSize(csize)
+        size = []
+        for i in range(dimension):
+            size.append(csize[i])
+        return size
+
+    def GetBufferedDataLength(self):
+        bufferedRegionSize = self.GetBufferedRegionSize()
+        dataLength = 1
+        for el in bufferedRegionSize:
+            dataLength *= el
+        return dataLength
+
+    def ReadImage(self,filename):
+        self.thisptr.ReadImage(filename)
+
+    def WriteImage(self,filename):
+        self.thisptr.WriteImage(filename)
+
+    def GetArray(self):
+        shape = self.GetBufferedRegionSize()
+        dataSize = self.GetBufferedDataLength()
+        #TODO: thorough testing of memcpy and dtypes
+        result = numpy.ndarray(shape,dtype=DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@'])
+        memcpy(<@CYITK_PIXEL_TYPE@*>numpy.PyArray_DATA(result),self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@*))
+        return result
+
+    def SetDataFromArray(self,arr):
+        if numpy.PyArray_NDIM(arr) != self.GetImageDimension():
+            #TODO: throw exception?
+            print 'Error: Cannot copy data from array with non-matching dimensionality'
+            return
+        if not (<object>arr).flags["C_CONTIGUOUS"]: 
+            arr = arr.copy('C') 
+        if arr.dtype != DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@']:
+            arr = arr.astype(DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@'])
+        self.thisptr.SetData(<int *>numpy.PyArray_DIMS(arr),<@CYITK_PIXEL_TYPE@ *>numpy.PyArray_DATA(arr))
+
+
+def ReadImage@CYITK_TEMPLATE_SUFFIX@(filename):
+    inImage = Image@CYITK_TEMPLATE_SUFFIX@()
+    inImage.ReadImage(filename)
+    return inImage
+
+

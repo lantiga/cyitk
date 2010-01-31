@@ -1,0 +1,17 @@
+Todos:
+- PixelType and ElementType should be treated appropriately in the ImportImageContainer related code (even though it currently works for scalar images)
+- deal with vector, tensor and multi-channel images
+- add CMake install rules
+- allow distributing Cython-generated source files together with ITK code and a CMakeLists
+- make Numpy an optional dependency
+
+Bug:
+- segmentation fault:
+import cyitkTest as cyitk
+image = cyitk.ReadImageS2('/Users/Luca/Work/Development/cyitk/Testing/cyitkGaussianSmoothingTest/input.nrrd')
+image.GetArray()
+  but no segfault with:
+import cyitkTest as cyitk
+image = cyitk.ImageS2()
+image.GetArray()
+
