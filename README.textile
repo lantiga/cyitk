@@ -1,4 +1,5 @@
 h1. cyitk
+
 h2. A simple ITK-to-Python bridge written in Cython
 
 Let's face it: prototyping ITK code ("ITK":http://www.itk.org) in C++ can end up being not as rapid as needed. The main bottleneck is writing very high-level code: once you've written you algorithmics by assembling a bunch of ITK classes in C++, say in one or more functions, you have to write a main in which you put them together, expose parameters, parse arguments, do your I/O and go through a complie cycle. To visualize, you typically write out a file and view it with an external application.
@@ -24,7 +25,7 @@ Here's a quick example (taken from cyitk/Testing/cyitkGaussianSmoothing).
 
 Say you have a C++ function GaussianSmoothing that applies an ITK filter to an input image and provides the filtered output image. In addition the function requires to specify the sigma of the Gaussian filter.
 
-pre. GaussianSmoothing.h
+GaussianSmoothing.h
 <pre><code>
 #ifndef __GaussianSmoothing_h
 #define __GaussianSmoothing_h
@@ -56,7 +57,7 @@ void GaussianSmoothing(ImageType* inputImage, ImageType* outputImage, double sig
 Note: the C++ code does not necessarily have to be in a .h file, and it could also be provided by a static or shared library. In this example it is in a .h file for simplicity.
 In order to make it available as a Python module, write a Cython file that will generate the bridge code:
 
-pre. cyitkGaussianSmoothing.pyx
+cyitkGaussianSmoothing.pyx
 <pre><code>
 cimport cyitk
 import cyitk
@@ -71,7 +72,7 @@ def GaussianSmoothing(inputImage,outputImage,sigma):
 If you don't know Cython and you don't want to learn it in depth, just take the above as a model, it shouldn't get much more complicated than this. In the future we will explore the possibility to generate it automatically from the function signature. 
 Last, write a CMakeLists.txt file: 
 
-pre. CMakeLists.txt
+CMakeLists.txt
 <pre><code>
 make_minimum_required(VERSION 2.6)
 project(CYITK_GAUSSIAN_SMOOTHING)
