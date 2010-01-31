@@ -27,6 +27,7 @@ Say you have a C++ function GaussianSmoothing that applies an ITK filter to an i
 
 GaussianSmoothing.h
 <pre><code>
+
   #ifndef __GaussianSmoothing_h
   #define __GaussianSmoothing_h
   
@@ -59,6 +60,7 @@ In order to make it available as a Python module, write a Cython file that will 
 
 cyitkGaussianSmoothing.pyx
 <pre><code>
+
   cimport cyitk
   import cyitk
   
@@ -74,6 +76,7 @@ Last, write a CMakeLists.txt file:
 
 CMakeLists.txt
 <pre><code>
+
   make_minimum_required(VERSION 2.6)
   project(CYITK_GAUSSIAN_SMOOTHING)
   
@@ -92,6 +95,7 @@ Since the C++ function was operating on itk::Image<float,2>, we generated wrappe
 To do that, just list for example
 
 <pre><code>
+
   cyitk_generate_image_class("float" 2 F2)
   cyitk_generate_image_class("short" 2 S2)
   cyitk_generate_image_class("double" 3 D3)
@@ -102,6 +106,7 @@ Last note, the third argument is the suffix appended to cyitk.Image to generate 
 That's it. With very little effort (two files, but consider that CMakeLists.txt is basically the same for any project, except for the specification of image types) we have made our code available in a Python module. At this point, just configure the project with CMake and build using make. A cyitkGaussianSmoothing module will be generated in the build directory. Copy the directory at a convenient location (or make PYTHONPATH point to it), fire up Python and just go
 
 <pre><code>
+
   #import the module
   import cyitkGaussianSmoothing as cyitk
   
