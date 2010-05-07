@@ -1,11 +1,14 @@
 import numpy
 cimport numpy
 
-
 from stdlib cimport free, malloc
 cdef extern from "stdlib.h":
     void *memcpy(void *dst, void *src, long n)
 
+cdef extern from "numpy/arrayobject.h":
+        cdef void import_array()
+
+import_array()
 
 cdef extern from "cyitkImage.h":
     ctypedef struct itkImage@CYITK_TEMPLATE_SUFFIX@ "itk::Image<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"
@@ -28,57 +31,22 @@ cdef extern from "cyitkImage.h":
     cyitkImage@CYITK_TEMPLATE_SUFFIX@* new_cyitkImage@CYITK_TEMPLATE_SUFFIX@ "new cyitkImage<@CYITK_PIXEL_TYPE@,@CYITK_DIMENSION@>"()
     void del_cyitkImage@CYITK_TEMPLATE_SUFFIX@ "delete"(cyitkImage@CYITK_TEMPLATE_SUFFIX@* image)
 
-
-DTypeMap@CYITK_TEMPLATE_SUFFIX@ = { 
-          #'signed char'         :'bool',
-      
-          #'signed char'         :'byte',
-          #'signed short'        :'short',
-          #'signed int'          :'int',
-          'signed long'         :'long',
-          #'signed long long'    :'longlong',
-
-          #'unsigned char'       :'ubyte',
-          #'unsigned short'      :'ushort',
-          #'unsigned int'        :'uint',
-          'unsigned long'       :'ulong',
-          #'unsigned long long'  :'ulonglong',
- 
-          #'char'                :'ubyte',
-          #'short'               :'short',
-          #'int'                 :'int',
-          'long'                :'long',
-          #'long long'           :'longlong',
-      
-          #'float'               :'float',
-          #'double'              :'double',
-          #'long double'         :'longdouble',
-      
-          'signed char'         :'int8',
-          'signed short'        :'int16',
-          'signed int'          :'int32',
-          'signed long long'    :'int64',
-          #'signed long long'    :'int96',
-          #'signed long long'    :'int128',
-      
-          'unsigned char'       :'uint8',
-          'unsigned short'      :'uint16',
-          'unsigned int'        :'uint32',
-          'unsigned long long'  :'uint64',
-          #'unsigned long long'  :'uint96',
-          #'unsigned long long'  :'uint128',
- 
-          'char'         :'uint8',
-          'short'        :'int16',
-          'int'          :'int32',
-          'long long'    :'int64',
-      
-          'float'               :'float32',
-          'double'              :'float64',
-          #'long double'         :'float80',
-          #'long double'         :'float96',
-          'long double'         :'float128'}
-
+TypenumMap = {
+        'bool':                 numpy.NPY_BOOL,
+        'signed char':          numpy.NPY_BYTE,
+        'char':                 numpy.NPY_UBYTE,
+        'short':                numpy.NPY_SHORT,
+        'unsigned':             numpy.NPY_USHORT,
+        'int':                  numpy.NPY_INT,
+        'unsigned int':         numpy.NPY_UINT,
+        'long':                 numpy.NPY_LONG,
+        'unsigned long':        numpy.NPY_ULONG,
+        'long long':            numpy.NPY_LONGLONG,
+        'unsigned long long':   numpy.NPY_ULONGLONG,
+        'float':                numpy.NPY_FLOAT,
+        'double':               numpy.NPY_DOUBLE,
+        'long double':          numpy.NPY_LONGDOUBLE
+}
 
 cdef class Image@CYITK_TEMPLATE_SUFFIX@:
 
@@ -174,13 +142,26 @@ cdef class Image@CYITK_TEMPLATE_SUFFIX@:
     def WriteImage(self,filename):
         self.thisptr.WriteImage(filename)
 
+    #def GetArray(self):
+    #    shape = self.GetBufferedRegionSize()
+    #    dataSize = self.GetBufferedDataLength()
+    #    dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
+    #    result = numpy.ndarray(shape,dtype=dtype)
+    #    memcpy(<@CYITK_PIXEL_TYPE@*>numpy.PyArray_DATA(result),self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@*))
+    #    return result
+
     def GetArray(self):
-        shape = self.GetBufferedRegionSize()
+        dimension = self.GetImageDimension()
         dataSize = self.GetBufferedDataLength()
-        #TODO: thorough testing of memcpy and dtypes
-        result = numpy.ndarray(shape,dtype=DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@'])
-        memcpy(<@CYITK_PIXEL_TYPE@*>numpy.PyArray_DATA(result),self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@*))
-        return result
+        shape = self.GetBufferedRegionSize()
+        cdef numpy.npy_intp* cshape = <numpy.npy_intp*>malloc(dimension*sizeof(numpy.npy_intp))
+        cdef int i
+        for 0 <= i < dimension:
+            cshape[i] = shape[i]
+        cdef void* dataptr = malloc(dataSize*sizeof(@CYITK_PIXEL_TYPE@))
+        memcpy(dataptr,self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@*))
+        arr = numpy.PyArray_SimpleNewFromData(dimension,cshape,TypenumMap["@CYITK_PIXEL_TYPE@"],<void*>dataptr)
+        return arr
 
     def SetDataFromArray(self,arr):
         if numpy.PyArray_NDIM(arr) != self.GetImageDimension():
@@ -189,8 +170,9 @@ cdef class Image@CYITK_TEMPLATE_SUFFIX@:
             return
         if not (<object>arr).flags["C_CONTIGUOUS"]: 
             arr = arr.copy('C') 
-        if arr.dtype != DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@']:
-            arr = arr.astype(DTypeMap@CYITK_TEMPLATE_SUFFIX@['@CYITK_PIXEL_TYPE@'])
+        dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
+        if arr.dtype != dtype:
+            arr = arr.astype(dtype)
         self.thisptr.SetData(<int *>numpy.PyArray_DIMS(arr),<@CYITK_PIXEL_TYPE@ *>numpy.PyArray_DATA(arr))
 
 
