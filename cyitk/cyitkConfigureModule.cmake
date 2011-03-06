@@ -101,6 +101,8 @@ macro(cyitk_configure_module moduleName pyxSrcs)
   #create __init__.py file
   set(CYITK_INIT_PY __init__.py)
   file(WRITE ${CYITK_MODULE_BINARY_DIR}/${CYITK_INIT_PY} "")
+  file(APPEND ${CYITK_MODULE_BINARY_DIR}/${CYITK_INIT_PY} "import sys\n")
+  file(APPEND ${CYITK_MODULE_BINARY_DIR}/${CYITK_INIT_PY} "sys.path.append('${CYITK_MODULE_BINARY_DIR}')\n")
   
   #set up targets and append entries in __init__.py
   foreach(CPP_FILE ${CYITK_IMAGE_SRCS})
