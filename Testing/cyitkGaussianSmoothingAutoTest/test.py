@@ -1,4 +1,4 @@
-import cyitkGaussianSmoothingTest as cyitk
+import cyitkGaussianSmoothingAutoTest as cyitk
 
 a = cyitk.ReadImageF2('input.nrrd')
 b = cyitk.ImageF2()
