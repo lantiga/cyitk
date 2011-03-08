@@ -2,7 +2,7 @@ import cyitkGaussianSmoothingAutoTest as cyitk
 
 a = cyitk.ReadImageF2('input.nrrd')
 b = cyitk.ImageF2()
-cyitk.GaussianSmoothing(a,b,1.0)
+cyitk.GaussianSmoothingF2(a,b,1.0)
 
 import pylab
 
