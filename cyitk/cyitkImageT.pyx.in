@@ -146,35 +146,26 @@ cdef class Image@CYITK_TEMPLATE_SUFFIX@:
         shape = self.GetBufferedRegionSize()
         dataSize = self.GetBufferedDataLength()
         dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
-        result = numpy.ndarray(shape,dtype=dtype)
+        result = numpy.ndarray(shape,dtype=dtype,order='F')
         memcpy(<@CYITK_PIXEL_TYPE@*>numpy.PyArray_DATA(result),self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@))
         return result
 
-    #def GetArray(self):
-    #    dimension = self.GetImageDimension()
-    #    dataSize = self.GetBufferedDataLength()
-    #    shape = self.GetBufferedRegionSize()
-    #    cdef numpy.npy_intp* cshape = <numpy.npy_intp*>malloc(dimension*sizeof(numpy.npy_intp))
-    #    cdef int i
-    #    for 0 <= i < dimension:
-    #        cshape[i] = shape[i]
-    #    cdef void* dataptr = malloc(dataSize*sizeof(@CYITK_PIXEL_TYPE@))
-    #    memcpy(dataptr,self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@))
-    #    arr = numpy.PyArray_SimpleNewFromData(dimension,cshape,TypenumMap["@CYITK_PIXEL_TYPE@"],<void*>dataptr)
-    #    return arr
-
     def SetDataFromArray(self,arr):
-        if numpy.PyArray_NDIM(arr) != self.GetImageDimension():
+        cdef unsigned int dimension = self.GetImageDimension()
+        if numpy.PyArray_NDIM(arr) != dimension:
             #TODO: throw exception?
             print 'Error: Cannot copy data from array with non-matching dimensionality'
             return
-        if not (<object>arr).flags["C_CONTIGUOUS"]: 
-            arr = arr.copy('C') 
+        if not (<object>arr).flags["F_CONTIGUOUS"]: 
+            print 'NON CONTIGUOUS'
+            arr = arr.copy('F') 
         dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
         if arr.dtype != dtype:
             arr = arr.astype(dtype)
-        self.thisptr.SetData(<int *>numpy.PyArray_DIMS(arr),<@CYITK_PIXEL_TYPE@ *>numpy.PyArray_DATA(arr))
-
+        cdef int* cdims = <int*>malloc(dimension*sizeof(int))
+        for i in range(dimension):
+            cdims[i] = numpy.PyArray_DIMS(arr)[i]
+        self.thisptr.SetData(cdims,<@CYITK_PIXEL_TYPE@ *>numpy.PyArray_DATA(arr))
 
 def ReadImage@CYITK_TEMPLATE_SUFFIX@(filename):
     inImage = Image@CYITK_TEMPLATE_SUFFIX@()
