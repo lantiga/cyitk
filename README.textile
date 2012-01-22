@@ -64,7 +64,7 @@ h3. Automated glue code generation
 
 You can generate the Cython glue code automatically (and in fact never deal with Cython directly) by annotating each exported function in the C++ file with a comment starting with //@cyitk and containing the function signature, whereby the ITK image typedefs are replaced by cyitk image types, prepended by a @ character:
 
-//@cyitk void GaussianSmoothingF2(@ImageF2 inputImage, @ImageF2 outputImage, double sigma)
+<code>//@cyitk void GaussianSmoothingF2(@ImageF2 inputImage, @ImageF2 outputImage, double sigma)</code>
 
 You can place the comment anywhere in the file, I usually place it right above the corresponding function signature.
 
@@ -73,45 +73,45 @@ h3. Write a CMakeLists.txt file:
 CMakeLists.txt
 <pre><code>
 
-  # set a minimum required CMake version
+  #set a minimum required CMake version
   cmake_minimum_required(VERSION 2.6)
-
-  # name the CMake project
+  
+  #name the CMake project
   project(CYITK_GAUSSIAN_SMOOTHING)
   
-  # find the cyitk source dir
+  #find the cyitk source dir
   find_path(CYITK_SOURCE_DIR cyitkGenerateImageClass.cmake "")
   
-  # set the directory with the code to be wrapped to the current source directory
+  #set the directory with the code to be wrapped to the current source directory
   set(CYITK_WRAPPED_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   
-  # give a name to the python module to be generated
+  #give a name to the python module to be generated
   set(CYITK_MODULE_NAME cyitkGaussianSmoothing)
   
-  # include the code for automated glue code generation
+  #include the code for automated glue code generation
   include(${CYITK_SOURCE_DIR}/cyitkGeneratePyx.cmake NO_POLICY_SCOPE)
-
-  # generate the Cython glue code based on the //@cytik comment in the GaussianSmoothing.h file
+  
+  #generate the Cython glue code based on the //@cytik comment in the GaussianSmoothing.h file
   cyitk_generate_pyx(${CMAKE_CURRENT_SOURCE_DIR}/GaussianSmoothing.h ${CYITK_MODULE_NAME}.pyx)
   
-  # include the code to generate the cyitk Image glue classes
+  #include the code to generate the cyitk Image glue classes
   include(${CYITK_SOURCE_DIR}/cyitkGenerateImageClass.cmake NO_POLICY_SCOPE)
-
-  # since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, 
-  # the corresponding glue class. However, we could add a list of several image types here 
-  # (limited to scalar images for now, but support for vector, tensor and multi-channel images 
-  # is in the works);
-  # note that the third argument is the suffix appended to cyitk.Image to generate the class 
-  # name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc);
-  # the suffix is free-form, just choose a sensible one;
-  # in addition to the cyitk.ImageF2 class, this one will also generate a cyitk.ReadImageF2 function
-  # for I/O, which will rely on ITK I/O mechanisms (you get this one for free too!)
+  
+  #since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, 
+  #the corresponding glue class. However, we could add a list of several image types here 
+  #(limited to scalar images for now, but support for vector, tensor and multi-channel images 
+  #is in the works);
+  #note that the third argument is the suffix appended to cyitk.Image to generate the class 
+  #name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc);
+  #the suffix is free-form, just choose a sensible one;
+  #in addition to the cyitk.ImageF2 class, this one will also generate a cyitk.ReadImageF2 function
+  #for I/O, which will rely on ITK I/O mechanisms (you get this one for free too!)
   cyitk_generate_image_class("float" 2 F2)
   
-  # include the code to generate the actual python module
+  #include the code to generate the actual python module
   include(${CYITK_SOURCE_DIR}/cyitkConfigureModule.cmake NO_POLICY_SCOPE)
-
-  # compile the Cython code and generate the desired module 
+  
+  #compile the Cython code and generate the desired module 
   cyitk_configure_module(cyitkGaussianSmoothing cyitkGaussianSmoothing.pyx)
   
 </code></pre>
