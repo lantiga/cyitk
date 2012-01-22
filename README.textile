@@ -73,48 +73,46 @@ h3. Write a CMakeLists.txt file:
 CMakeLists.txt
 <pre><code>
 
-  #set a minimum required CMake version
   cmake_minimum_required(VERSION 2.6)
   
-  #name the CMake project
   project(CYITK_GAUSSIAN_SMOOTHING)
   
-  #find the cyitk source dir
   find_path(CYITK_SOURCE_DIR cyitkGenerateImageClass.cmake "")
   
-  #set the directory with the code to be wrapped to the current source directory
+  include(${CYITK_SOURCE_DIR}/cyitkGeneratePyx.cmake NO_POLICY_SCOPE)
+  include(${CYITK_SOURCE_DIR}/cyitkGenerateImageClass.cmake NO_POLICY_SCOPE)
+  include(${CYITK_SOURCE_DIR}/cyitkConfigureModule.cmake NO_POLICY_SCOPE)
+
   set(CYITK_WRAPPED_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   
-  #give a name to the python module to be generated
   set(CYITK_MODULE_NAME cyitkGaussianSmoothing)
   
-  #include the code for automated glue code generation
-  include(${CYITK_SOURCE_DIR}/cyitkGeneratePyx.cmake NO_POLICY_SCOPE)
-  
-  #generate the Cython glue code based on the //@cytik comment in the GaussianSmoothing.h file
   cyitk_generate_pyx(${CMAKE_CURRENT_SOURCE_DIR}/GaussianSmoothing.h ${CYITK_MODULE_NAME}.pyx)
   
-  #include the code to generate the cyitk Image glue classes
-  include(${CYITK_SOURCE_DIR}/cyitkGenerateImageClass.cmake NO_POLICY_SCOPE)
-  
-  #since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, 
-  #the corresponding glue class. However, we could add a list of several image types here 
-  #(limited to scalar images for now, but support for vector, tensor and multi-channel images 
-  #is in the works);
-  #note that the third argument is the suffix appended to cyitk.Image to generate the class 
-  #name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc);
-  #the suffix is free-form, just choose a sensible one;
-  #in addition to the cyitk.ImageF2 class, this one will also generate a cyitk.ReadImageF2 function
-  #for I/O, which will rely on ITK I/O mechanisms (you get this one for free too!)
   cyitk_generate_image_class("float" 2 F2)
   
-  #include the code to generate the actual python module
-  include(${CYITK_SOURCE_DIR}/cyitkConfigureModule.cmake NO_POLICY_SCOPE)
-  
-  #compile the Cython code and generate the desired module 
-  cyitk_configure_module(cyitkGaussianSmoothing cyitkGaussianSmoothing.pyx)
+  cyitk_configure_module(${CYITK_MODULE_NAME} ${CYITK_MODULE_NAME}.pyx)
   
 </code></pre>
+
+The lines you should care about are 
+
+<code> 
+  set(CYITK_MODULE_NAME cyitkGaussianSmoothing)
+</code>
+give a name to the Python module to be generated
+
+<code>
+  cyitk_generate_pyx(${CMAKE_CURRENT_SOURCE_DIR}/GaussianSmoothing.h ${CYITK_MODULE_NAME}.pyx)
+</code>
+generate the Cython glue code based on the //@cytik comment in the GaussianSmoothing.h file
+ 
+<code>
+  cyitk_generate_image_class("float" 2 F2)
+</code>
+since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, the corresponding glue class. However, we could add a list of several image types here (limited to scalar images for now, but support for vector, tensor and multi-channel images is in the works).
+Note that the third argument is the suffix appended to cyitk.Image to generate the class name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc). The suffix is free-form, just choose a sensible one.
+In addition to the cyitk.ImageF2 class, this line will also generate a cyitk.ReadImageF2 function for I/O, which will rely on ITK I/O mechanisms (you get this one for free).
 
 That's it. With very little effort (one comment and a CMakeLists.txt file - which is basically going to be the same for any project, except for the specification of image types) we have made our code available in a Python module. At this point, just configure the project with CMake and build using make. A cyitkGaussianSmoothing module will be generated in the build directory. Copy the directory at a convenient location (or make PYTHONPATH point to it), fire up Python and just go
 
