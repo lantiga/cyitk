@@ -1,7 +1,7 @@
 import numpy
 cimport numpy
 
-from stdlib cimport free, malloc
+from libc.stdlib cimport free, malloc
 cdef extern from "stdlib.h":
     void *memcpy(void *dst, void *src, long n)
 
