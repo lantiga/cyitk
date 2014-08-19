@@ -49,7 +49,7 @@ for line in cyitklines:
             pre_cyargs.append(arg)
         else:
             pre_cyargs.append(arg.split()[-1])
-    cy_image_re = re.compile('(?:@Image)(\w*)(?:\s*)(\w*)(?=[,])')
+    cy_image_re = re.compile('(?:@Image)(\w*)(?:\s*)(\w*)(?:(?=[,])|$)')
     cyargnames = cy_image_re.sub(cy_image_repl,','.join(pre_cyargs))
     if ret != 'void':
         cycall = '    return itk%s(%s)' % (func,cyargnames)
