@@ -147,7 +147,7 @@ cdef class Image@CYITK_TEMPLATE_SUFFIX@:
         shape = self.GetBufferedRegionSize()
         dataSize = self.GetBufferedDataLength()
         dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
-        result = numpy.ndarray(shape,dtype=dtype,order='F')
+        result = numpy.ndarray(shape,dtype=dtype,order='C')
         memcpy(<@CYITK_PIXEL_TYPE@*>numpy.PyArray_DATA(result),self.thisptr.GetBufferPointer(),dataSize*sizeof(@CYITK_PIXEL_TYPE@))
         return result
 
@@ -159,7 +159,7 @@ cdef class Image@CYITK_TEMPLATE_SUFFIX@:
             return
         if not (<object>arr).flags["F_CONTIGUOUS"]: 
             print 'NON CONTIGUOUS'
-            arr = arr.copy('F') 
+            arr = arr.copy('C') 
         dtype = numpy.PyArray_DescrFromType(TypenumMap["@CYITK_PIXEL_TYPE@"])
         if arr.dtype != dtype:
             arr = arr.astype(dtype)
