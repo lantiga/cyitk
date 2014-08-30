@@ -121,6 +121,15 @@ macro(cyitk_configure_module moduleName pyxSrcs)
     file(APPEND ${CYITK_MODULE_BINARY_DIR}/${CYITK_INIT_PY} "from ${MODULE_NAME} import *\n")
   endforeach(CPP_FILE)
   
+  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+  if (CMAKE_HOST_WIN32)
+      set_target_properties(${MODULE_NAME} PROPERTIES SUFFIX ".pyd")
+  endif(CMAKE_HOST_WIN32)
+  set_target_properties(${CYITK_IMAGE_CLASSES_TARGET_NAME} PROPERTIES PREFIX "")
+  if (CMAKE_HOST_WIN32)
+      set_target_properties(${CYITK_IMAGE_CLASSES_TARGET_NAME} PROPERTIES SUFFIX ".pyd")
+  endif(CMAKE_HOST_WIN32)
+
   #install
 endmacro(cyitk_configure_module)
 
