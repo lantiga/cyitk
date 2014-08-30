@@ -6,9 +6,9 @@ find_path(CYITK_SOURCE_DIR cyitkGenerateImageClass.cmake ${CMAKE_CURRENT_SOURCE_
 set(CYITK_WRAPPED_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}) 
 
 include(${CYITK_SOURCE_DIR}/cyitkGenerateImageClass.cmake NO_POLICY_SCOPE)
-cyitk_generate_image_class("float" 2 F2)
-cyitk_generate_image_class("short" 2 S2)
-cyitk_generate_image_class("double" 3 D3)
+cyitk_generate_image_class("float" 2 F F2)
+cyitk_generate_image_class("short" 2 F S2)
+cyitk_generate_image_class("double" 3 F D3)
 
 include(${CYITK_SOURCE_DIR}/cyitkConfigureModule.cmake NO_POLICY_SCOPE)
 cyitk_configure_module(cyitkGaussianSmoothingTest cyitkGaussianSmoothingTest.pyx)

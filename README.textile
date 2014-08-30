@@ -107,10 +107,10 @@ give a name to the Python module to be generated
 generate the Cython glue code based on the //@cytik comment in the GaussianSmoothing.h file
  
 <code>
-  cyitk_generate_image_class("float" 2 F2)
+  cyitk_generate_image_class("float" 2 F F2)
 </code>
-generate the cyitk glue Image classes. Since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, the corresponding glue class. However, we could add a list of several image types here (limited to scalar images for now, but support for vector, tensor and multi-channel images is in the works).
-Note that the third argument is the suffix appended to cyitk.Image to generate the class name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc). The suffix is free-form, just choose a sensible one.
+generate the cyitk glue Image classes. Since the C++ function was operating on itk::Image<float,2>, we generate cyitk.ImageF2, the corresponding glue class. However, we could add a list of several image types here (limited to scalar images for now, but support for vector, tensor and multi-channel images is in the works). The third argument specifies the layout of the Numpy array holding the pixel values. It can either be `C` (for C-contiguous, with the last axis index changing fastest) or `F` (for Fortran-contiguous, with the firest index changing fastest).
+Note that the fourth argument is the suffix appended to cyitk.Image to generate the class name that will be made available in the Python module (i.e. cyitk.ImageF2, cyitk.ImageD3, etc). The suffix is free-form, just choose a sensible one.
 In addition to the cyitk.ImageF2 class, this line will also generate a cyitk.ReadImageF2 function for I/O, which will rely on ITK I/O mechanisms (you get this one for free).
 
 That's it. With very little effort (one comment and a CMakeLists.txt file - which is basically going to be the same for any project, except for the specification of image types) we have made our code available in a Python module. At this point, just configure the project with CMake and build using make. A cyitkGaussianSmoothing module will be generated in the build directory. Copy the directory at a convenient location (or make PYTHONPATH point to it), fire up Python and just go
